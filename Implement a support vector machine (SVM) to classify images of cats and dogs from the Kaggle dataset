@@ -1,0 +1,50 @@
+import cv2
+import numpy as np
+import os
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report, accuracy_score
+
+def load_images_from_folder(folder, label):
+    images = []
+    labels = []
+    for filename in os.listdir(folder):
+        img_path = os.path.join(folder, filename)
+        img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        if img is not None:
+            img = cv2.resize(img, (64, 64))  # Resize images
+            images.append(img.flatten())
+            labels.append(label)
+    return images, labels
+
+# Update these paths according to your dataset location
+cats_dir = '/path/to/cats'
+dogs_dir = '/path/to/dogs'
+
+cats, cats_labels = load_images_from_folder(cats_dir, 0)  # 0 for cats
+dogs, dogs_labels = load_images_from_folder(dogs_dir, 1)  # 1 for dogs
+
+# Combine the datasets
+X = np.array(cats + dogs)
+y = np.array(cats_labels + dogs_labels)
+
+# Split the dataset into a training set and a test set
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+
+# Feature scaling
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+# Initialize the SVM model
+model = SVC(kernel='linear', C=1.0, random_state=42)
+
+# Train the model
+model.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+print(f"Classification Report:\n{classification_report(y_test, y_pred)}")
+print(f"Accuracy: {accuracy_score(y_test, y_pred)}")
